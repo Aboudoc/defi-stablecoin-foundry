@@ -8,3 +8,6 @@
    2. wBTC
 
 forge test -m testGetUsdValue
+
+forge coverage
+forge coverage --report debug

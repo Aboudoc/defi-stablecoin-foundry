@@ -80,4 +80,37 @@ contract DSCEngineTest is Test {
         dsce.depositCollateral(weth, 0);
         vm.stopPrank();
     }
+
+    function testRevertsWithUnapprovedCollateral() public {
+        ERC20Mock ranToken = new ERC20Mock();
+        vm.startPrank(USER);
+        ranToken.mint(address(USER), AMOUNT_COLLATERAL);
+        vm.expectRevert(DSCEngine.DSCEngine__NotAllowedToken.selector);
+        dsce.depositCollateral(address(ranToken), AMOUNT_COLLATERAL);
+        vm.stopPrank();
+    }
+
+    modifier depositedCollateral() {
+        vm.startPrank(USER);
+        ERC20Mock(weth).approve(address(dsce), AMOUNT_COLLATERAL);
+        dsce.depositCollateral(weth, AMOUNT_COLLATERAL);
+        vm.stopPrank();
+        _;
+    }
+
+    function testCanDepositCollateralAndGetAccountInfo()
+        public
+        depositedCollateral
+    {
+        (uint256 totalDscMinted, uint256 collateralValueInUsd) = dsce
+            .getAccountInformation(USER);
+
+        uint256 expectedDscMinted = 0;
+        uint256 expectedDepositAmount = dsce.getTokenAmountFromUsd(
+            weth,
+            collateralValueInUsd
+        );
+        assertEq(totalDscMinted, expectedDscMinted);
+        assertEq(AMOUNT_COLLATERAL, expectedDepositAmount);
+    }
 }
