@@ -315,15 +315,33 @@ contract DSCEngineTest is Test {
     // redeemCollateralForDsc Tests //
     //////////////////////////////////
 
-    // Added DIVISOR
-    // function testCanRedeemCollateralForDsc() public depositedCollateralAndMintedDsc {
+    function testMustRedeemMoreThanZero() public depositedCollateralAndMintedDsc {
+        vm.startPrank(USER);
+        vm.expectRevert(DSCEngine.DSCEngine__NeedsMoreThanZero.selector);
+        dsce.redeemCollateralForDsc(weth, 0, AMOUNT_TO_MINT);
+        vm.stopPrank();
+    }
+
+    // function testCanRedeemCollateralDeposited1() public depositedCollateralAndMintedDsc {
     //     vm.startPrank(USER);
     //     dsc.approve(address(dsce), AMOUNT_TO_MINT);
     //     dsce.redeemCollateralForDsc(weth, AMOUNT_COLLATERAL, AMOUNT_TO_MINT);
+    //     uint256 wethBalance = ERC20Mock(weth).balanceOf(USER);
     //     vm.stopPrank();
-    // (uint256 totalDscMinted, uint256 collateralValueInUsd) = dsce.getAccountInformation(USER);
-    // assertEq(totalDscMinted, 0);
+    //     assertEq(wethBalance, STARTING_ERC20_BALANCE);
     // }
+
+    function testCanRedeemDepositedCollateral() public {
+        vm.startPrank(USER);
+        ERC20Mock(weth).approve(address(dsce), AMOUNT_COLLATERAL);
+        dsce.depositCollateralAndMintDsc(weth, AMOUNT_COLLATERAL, AMOUNT_TO_MINT);
+        dsc.approve(address(dsce), AMOUNT_TO_MINT);
+        dsce.redeemCollateralForDsc(weth, AMOUNT_COLLATERAL, AMOUNT_TO_MINT);
+        vm.stopPrank();
+
+        uint256 userBalance = dsc.balanceOf(USER);
+        assertEq(userBalance, 0);
+    }
 
     ////////////////////////
     // healthFactor Tests //
