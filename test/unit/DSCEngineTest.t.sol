@@ -347,6 +347,24 @@ contract DSCEngineTest is Test {
     // healthFactor Tests //
     ////////////////////////
 
+    function testProperlyReportsHealthFactor() public depositedCollateralAndMintedDsc {
+        uint256 expectedHealthFactor = 10 ether;
+        uint256 healthFactor = dsce.getHealthFactor(USER);
+        assertEq(expectedHealthFactor, healthFactor);
+    }
+
+    // Review this one
+    function testHealthFactorCanGoBelowOne() public depositedCollateralAndMintedDsc {
+        int256 ethUsdUpdatedPrice = 18e9; // 1 ETH = $180
+        // Rememeber, we need $1500 at all times if we have $1000 of debt
+
+        MockV3Aggregator(ethUsdPriceFeed).updateAnswer(ethUsdUpdatedPrice);
+
+        uint256 userHealthFactor = dsce.getHealthFactor(USER);
+        // $1800 collateral / 2000 debt = 0.9
+        assert(userHealthFactor == 0.9 ether);
+    }
+
     ///////////////////////
     // Liquidation Tests //
     ///////////////////////
