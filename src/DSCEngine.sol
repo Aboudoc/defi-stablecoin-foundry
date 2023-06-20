@@ -204,7 +204,7 @@ contract DSCEngine is ReentrancyGuard {
         // And take their collateral
         uint256 tokenAmountFromDebtCovered = getTokenAmountFromUsd(collateral, debtToCover); // We create getTokenAmountFromUsd
         // And give them a 10% bonus
-        uint256 bonusCollateral = tokenAmountFromDebtCovered * LIQUIDATOR_BONUS / LIQUIDATION_PRECISION;
+        uint256 bonusCollateral = tokenAmountFromDebtCovered * LIQUIDATION_BONUS / LIQUIDATION_PRECISION;
         uint256 totalCollateralToRedeem = tokenAmountFromDebtCovered + bonusCollateral;
         _redeemCollateral(user, msg.sender, collateral, totalCollateralToRedeem);
         // We need to burn the DSC
