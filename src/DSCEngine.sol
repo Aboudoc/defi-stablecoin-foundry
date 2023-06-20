@@ -18,14 +18,11 @@ import {AggregatorV3Interface} from "@chainlink/contracts/src/v0.8/interfaces/Ag
  * - Dollar Pegged
  * - Algorithmically Stable
  *
- * It is similar to DAI if DAI had no governance, no fees, and was only backed by WETH and
- * WBTC
+ * It is similar to DAI if DAI had no governance, no fees, and was only backed by WETH and WBTC
  *
- * Our DSC system should always be "overcollateralized". At no point, should the value of all
- * collateral <= the $ backed value of all the DSC
+ * Our DSC system should always be "overcollateralized". At no point, should the value of all collateral <= the $ backed value of all the DSC
  *
- * @notice This contract is the core of the DSC System. It handlers all the logic for minting
- * and redeeming DSC, as well as depositing & withdrawing collateral.
+ * @notice This contract is the core of the DSC System. It handlers all the logic for minting and redeeming DSC, as well as depositing & withdrawing collateral.
  * @notice This contract is VERY loosely based on the MakerDAO DSS (DAI) system.
  */
 contract DSCEngine is ReentrancyGuard {
@@ -49,7 +46,7 @@ contract DSCEngine is ReentrancyGuard {
     uint256 private constant LIQUIDATION_THRESHOLD = 50;
     uint256 private constant LIQUIDATION_PRECISION = 100;
     uint256 private constant MIN_HEALTH_FACTOR = 1e18;
-    uint256 private constant LIQUIDATOR_BONUS = 10;
+    uint256 private constant LIQUIDATION_BONUS = 10;
 
     mapping(address token => address priceFeed) private s_priceFeeds;
     mapping(address user => mapping(address token => uint256 amount)) private s_collateralDeposited;
@@ -183,15 +180,12 @@ contract DSCEngine is ReentrancyGuard {
     /**
      *
      * @param collateral The erc20 collateral address to liquidate from the user
-     * @param user The user who has broken the heath factor. Their _healthFactor should be
-     * below MIN_HEALTH_FACTOR
+     * @param user The user who has broken the heath factor. Their _healthFactor should be below MIN_HEALTH_FACTOR
      * @param debtToCover The amount of DSC you want to burn to improve users health factor
      * @notice You can partially liquidate a user.
      * @notice You will get a liquidation bonus for taking the users funds
-     * @notice This function working assumes the protocol will be roughly 200% overcollateralized
-     * in order for this to work
-     * @notice A known bug will be if the protocol were 100% or less collateralized, then
-     * we wouldn't be able to incentivize liquidators
+     * @notice This function working assumes the protocol will be roughly 200% overcollateralized in order for this to work
+     * @notice A known bug will be if the protocol were 100% or less collateralized, then we wouldn't be able to incentivize liquidators
      * For example, if the price of the collateral plummeted before anyone could be liquidated
      *
      * Follows CEI: Checks, Effects, Interactions
@@ -343,5 +337,21 @@ contract DSCEngine is ReentrancyGuard {
 
     function getHealthFactor(address user) external view returns (uint256) {
         return _healthFactor(user);
+    }
+
+    function getLiquidationBonus() external pure returns (uint256) {
+        return LIQUIDATION_BONUS;
+    }
+
+    function getMinHealthFactor() external pure returns (uint256) {
+        return MIN_HEALTH_FACTOR;
+    }
+
+    function getDsc() external view returns (address) {
+        return address(i_dsc);
+    }
+
+    function getCollateralTokenPriceFeed(address token) external view returns (address) {
+        return s_priceFeeds[token];
     }
 }
