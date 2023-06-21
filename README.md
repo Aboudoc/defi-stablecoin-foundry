@@ -35,7 +35,8 @@ forge inspect DSCEngine methods
 It will print out the different functions and their selectors
 
 Can be used as a checklist of all the different functions to call on a contract
-We use to check our view functions and do invariant getter
+
+We can use this to check our view functions and do invariant getters
 
 ```sh
 
@@ -63,3 +64,9 @@ We use to check our view functions and do invariant getter
   "redeemCollateralForDsc(address,uint256,uint256)": "f419ea9c"
 }
 ```
+
+# End
+
+1. Some proper oracle use
+2. Write more tests (challenge)
+3. Smart contract Audit Preparation
