@@ -28,7 +28,6 @@ contract DSCEngineTest is Test {
     uint256 public constant AMOUNT_TO_MINT = 100 ether;
     address public liquidator = makeAddr("liquidator");
     uint256 public collateralToCover = 20 ether;
-    // uint256 public constant AMOUNT_TO_MINT_LIQUIDATION = 100 ether;
 
     function setUp() public {
         deployer = new DeployDSC();
@@ -389,7 +388,13 @@ contract DSCEngineTest is Test {
         _;
     }
 
-    function testLiquidationPayoutIsCorrect() public {}
+    function testLiquidationPayoutIsCorrect() public liquidated {
+        uint256 wethBalance = ERC20Mock(weth).balanceOf(liquidator);
+        // uint256 liquidationBonus = (dsce.getLiquidationBonus() * AMOUNT_TO_MINT) / 1e18;
+        uint256 expectedWethBalance = dsce.getTokenAmountFromUsd(weth, AMOUNT_TO_MINT)
+            + (dsce.getTokenAmountFromUsd(weth, AMOUNT_TO_MINT) / dsce.getLiquidationBonus());
+        assertEq(wethBalance, expectedWethBalance);
+    }
 
     function testUserHasNoMoreDebt() public liquidated {
         (uint256 totalDscMinted,) = dsce.getAccountInformation(USER);
