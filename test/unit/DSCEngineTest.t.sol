@@ -356,9 +356,23 @@ contract DSCEngineTest is Test {
 
     function testMustImproveHealthFactorOnLiquidation() public {}
 
-    function testCantLiquidateGoodHealthFactor() public {}
+    function testCantLiquidateGoodHealthFactor() public depositedCollateralAndMintedDsc {
+        ERC20Mock(weth).mint(liquidator, collateralToCover);
 
-    function testCanLiquidateUser() public depositedCollateralAndMintedDsc {
+        vm.startPrank(liquidator);
+        ERC20Mock(weth).approve(address(dsce), collateralToCover);
+        dsce.depositCollateralAndMintDsc(weth, collateralToCover, AMOUNT_TO_MINT);
+        vm.expectRevert(DSCEngine.DSCEngine__HealthFactorOk.selector);
+        dsce.liquidate(weth, USER, AMOUNT_TO_MINT);
+        vm.stopPrank();
+    }
+
+    modifier liquidated() {
+        vm.startPrank(USER);
+        ERC20Mock(weth).approve(address(dsce), AMOUNT_COLLATERAL);
+        dsce.depositCollateralAndMintDsc(weth, AMOUNT_COLLATERAL, AMOUNT_TO_MINT);
+        vm.stopPrank();
+
         // collateral deposited: 10 ether (at 1 ETH/USD = $2,000) and minted $1k => healt factor = 10
         int256 updatedPrice = 18e8; // from $2,000 to $18
         MockV3Aggregator(ethUsdPriceFeed).updateAnswer(updatedPrice);
@@ -372,6 +386,14 @@ contract DSCEngineTest is Test {
         dsc.approve(address(dsce), AMOUNT_TO_MINT);
         dsce.liquidate(weth, USER, AMOUNT_TO_MINT); // covering the whole debt
         vm.stopPrank();
+        _;
+    }
+
+    function testLiquidationPayoutIsCorrect() public {}
+
+    function testUserHasNoMoreDebt() public liquidated {
+        (uint256 totalDscMinted,) = dsce.getAccountInformation(USER);
+        assertEq(totalDscMinted, 0);
     }
 
     ///////////////////////////////////
