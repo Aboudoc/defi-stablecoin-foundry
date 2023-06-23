@@ -12,6 +12,7 @@ import {MockV3Aggregator} from "@chainlink/contracts/src/v0.8/tests/MockV3Aggreg
 import {MockFailedMintDSC} from "../mocks/MockFailedMintDSC.sol";
 import {MockFailedTransferFrom} from "../mocks/MockFailedTransferFrom.sol";
 import {MockFailedTransfer} from "../mocks/MockFailedTransfer.sol";
+import {MockMoreDebtDSC} from "../mocks/MockMoreDebtDSC.sol";
 
 contract DSCEngineTest is Test {
     DeployDSC deployer;
@@ -353,8 +354,43 @@ contract DSCEngineTest is Test {
     // Liquidation Tests //
     ///////////////////////
 
-    // Neeeds its own setup
-    function testMustImproveHealthFactorOnLiquidation() public {}
+    // Needs its own setup => REVIEW
+    function testMustImproveHealthFactorOnLiquidation() public {
+        // Arrange - Setup
+        MockMoreDebtDSC mockMoreDebtDSC = new MockMoreDebtDSC(ethUsdPriceFeed);
+        address owner = msg.sender;
+
+        tokenAddresses = [weth];
+        priceFeedAddresses = [ethUsdPriceFeed];
+
+        vm.prank(owner);
+        DSCEngine dsceMoreDebt = new DSCEngine(tokenAddresses, priceFeedAddresses, address(mockMoreDebtDSC));
+        mockMoreDebtDSC.transferOwnership(address(dsceMoreDebt));
+
+        // Arrange - User
+        vm.startPrank(USER);
+        ERC20Mock(weth).approve(address(dsceMoreDebt), AMOUNT_COLLATERAL);
+        dsceMoreDebt.depositCollateralAndMintDsc(weth, AMOUNT_COLLATERAL, AMOUNT_TO_MINT);
+        vm.stopPrank();
+
+        // Arrange - Liquidator
+        collateralToCover = 1 ether;
+        ERC20Mock(weth).mint(liquidator, collateralToCover);
+
+        vm.startPrank(liquidator);
+        ERC20Mock(weth).approve(address(dsceMoreDebt), collateralToCover);
+        uint256 debtToCover = 1 ether;
+
+        dsceMoreDebt.depositCollateralAndMintDsc(weth, collateralToCover, AMOUNT_TO_MINT);
+        mockMoreDebtDSC.approve(address(dsceMoreDebt), AMOUNT_TO_MINT);
+        // ACT
+        int256 ethUsdUpdatedPrice = 18e8; // 1 ETH = $18
+        MockV3Aggregator(ethUsdPriceFeed).updateAnswer(ethUsdUpdatedPrice);
+        // ACT/assert
+        vm.expectRevert(DSCEngine.DSCEngine__HealthFactorNotImproved.selector);
+        dsceMoreDebt.liquidate(weth, USER, debtToCover);
+        vm.stopPrank();
+    }
 
     function testCantLiquidateGoodHealthFactor() public depositedCollateralAndMintedDsc {
         ERC20Mock(weth).mint(liquidator, collateralToCover);
