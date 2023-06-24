@@ -29,6 +29,8 @@ contract DSCEngineTest is Test {
     uint256 public constant AMOUNT_TO_MINT = 100 ether;
     address public liquidator = makeAddr("liquidator");
     uint256 public collateralToCover = 20 ether;
+    uint256 public constant MIN_HEALTH_FACTOR = 1e18;
+    uint256 public constant LIQUIDATION_THRESHOLD = 50;
 
     function setUp() public {
         deployer = new DeployDSC();
@@ -441,4 +443,29 @@ contract DSCEngineTest is Test {
     ///////////////////////////////////
     // View & Pure Function Tests //
     ///////////////////////////////////
+
+    function testGetCollateralTokenPriceFeed() public {
+        address collateralTokenPriceFeed = dsce.getCollateralTokenPriceFeed(weth);
+        assertEq(collateralTokenPriceFeed, ethUsdPriceFeed);
+    }
+
+    function testGetCollateralTokens() public {
+        address[] memory collateralTokens = dsce.getCollateralTokens();
+        assertEq(collateralTokens[0], weth);
+    }
+
+    function testGetMinHealthFacator() public {
+        uint256 minHealthFactor = dsce.getMinHealthFactor();
+        assertEq(MIN_HEALTH_FACTOR, minHealthFactor);
+    }
+
+    function testGetLiquidationThreshold() public {
+        uint256 liquidationThreshold = dsce.getLiquidationThreshold();
+        assertEq(LIQUIDATION_THRESHOLD, liquidationThreshold);
+    }
+
+    function testGetDsc() public {
+        address dscAddress = dsce.getDsc();
+        assertEq(dscAddress, address(dsc));
+    }
 }
