@@ -13,8 +13,9 @@ import {MockFailedMintDSC} from "../mocks/MockFailedMintDSC.sol";
 import {MockFailedTransferFrom} from "../mocks/MockFailedTransferFrom.sol";
 import {MockFailedTransfer} from "../mocks/MockFailedTransfer.sol";
 import {MockMoreDebtDSC} from "../mocks/MockMoreDebtDSC.sol";
+import {StdCheats} from "forge-std/StdCheats.sol";
 
-contract DSCEngineTest is Test {
+contract DSCEngineTest is StdCheats, Test {
     DeployDSC deployer;
     DecentralizedStableCoin dsc;
     DSCEngine dsce;

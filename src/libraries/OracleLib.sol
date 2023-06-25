@@ -7,7 +7,7 @@ pragma solidity ^0.8.18;
 /**
  * @title OracleLib
  * @author Reda Aboutika
- * @notice This libraryis used to check the Chainlink Oracle for stale data.
+ * @notice This library is used to check the Chainlink Oracle for stale data.
  * If a price is stale, the function will revert and render the DSCEngine unusable - This is design
  * We want the DSCEngine freeze if prices become stale
  *
@@ -26,8 +26,18 @@ library OracleLib {
         (uint80 roundId, int256 answer, uint256 startedAt, uint256 updatedAt, uint80 answeredInRound) =
             priceFeed.latestRoundData();
 
+        if (updatedAt == 0 || answeredInRound < roundId) {
+            revert OracleLib__StalePrice();
+        }
+
         uint256 secondsSince = block.timestamp - updatedAt;
-        if (secondsSince > TIMEOUT) revert OracleLib__StalePrice();
+        if (secondsSince > TIMEOUT) {
+            revert OracleLib__StalePrice();
+        }
         return (roundId, answer, startedAt, updatedAt, answeredInRound);
+    }
+
+    function getTimeout(AggregatorV3Interface /* chainlinkFeed */ ) public pure returns (uint256) {
+        return TIMEOUT;
     }
 }
